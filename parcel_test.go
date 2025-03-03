@@ -31,7 +31,7 @@ func getTestParcel() Parcel {
 // TestAddGetDelete проверяет добавление, получение и удаление посылки
 func TestAddGetDelete(t *testing.T) {
 	// prepare
-	db, err := // настройте подключение к БД
+	db, err := sql.Open("sqlite3", "tracker.db")// настройте подключение к БД
 	store := NewParcelStore(db)
 	parcel := getTestParcel()
 

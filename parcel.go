@@ -14,18 +14,45 @@ func NewParcelStore(db *sql.DB) ParcelStore {
 
 func (s ParcelStore) Add(p Parcel) (int, error) {
 	// реализуйте добавление строки в таблицу parcel, используйте данные из переменной p
+	db, err := sql.Open("sqlite", "tracker.db")
+	if err != nil {
+		return 0, err
+	}
+	defer db.Close()
+	res, err := db.Exec("INSERT INTO parcel(number, client, status, address, created_at)"+
+		"VALUES(:number, :client, :status, :address, :createdAt)",
+		sql.Named("number", p.Number),
+		sql.Named("client", p.Client),
+		sql.Named("status", p.Status),
+		sql.Named("address", p.Address),
+		sql.Named("createdAt", p.CreatedAt))
+	if err != nil {
+		return 0, err
+	}
+	lastId, _ := res.LastInsertId()
 
 	// верните идентификатор последней добавленной записи
-	return 0, nil
+	return int(lastId), nil
 }
 
 func (s ParcelStore) Get(number int) (Parcel, error) {
 	// реализуйте чтение строки по заданному number
 	// здесь из таблицы должна вернуться только одна строка
-
 	// заполните объект Parcel данными из таблицы
 	p := Parcel{}
 
+	db, err := sql.Open("sqlite", "tracker.db")
+	if err != nil {
+		return p, err
+	}
+	defer db.Close()
+
+	row := db.QueryRow("SELECT number, client, status, address, created_at FROM parcel WHERE "+
+		"number = :number", sql.Named("number", number))
+	err = row.Scan(&p.Number, &p.Client, &p.Status, &p.Address, &p.CreatedAt)
+	if err != nil {
+		return p, err
+	}
 	return p, nil
 }
 
