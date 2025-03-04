@@ -19,9 +19,8 @@ func (s ParcelStore) Add(p Parcel) (int, error) {
 		return 0, err
 	}
 	defer db.Close()
-	res, err := db.Exec("INSERT INTO parcel(number, client, status, address, created_at)"+
-		"VALUES(:number, :client, :status, :address, :createdAt)",
-		sql.Named("number", p.Number),
+	res, err := db.Exec("INSERT INTO parcel(client, status, address, created_at)"+
+		"VALUES(:client, :status, :address, :createdAt)",
 		sql.Named("client", p.Client),
 		sql.Named("status", p.Status),
 		sql.Named("address", p.Address),
@@ -63,25 +62,94 @@ func (s ParcelStore) GetByClient(client int) ([]Parcel, error) {
 	// заполните срез Parcel данными из таблицы
 	var res []Parcel
 
+	db, err := sql.Open("sqlite", "tracker.db")
+	if err != nil {
+		return res, err
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT number, client, status, address, created_at from parcel WHERE client = :client", sql.Named("client", client))
+	if err != nil {
+		return res, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		p := Parcel{}
+		err := rows.Scan(&p.Number, &p.Client, &p.Status, &p.Address, &p.CreatedAt)
+		if err != nil {
+			return res, err
+		}
+		res = append(res, p)
+	}
+
 	return res, nil
 }
 
 func (s ParcelStore) SetStatus(number int, status string) error {
 	// реализуйте обновление статуса в таблице parcel
+	db, err := sql.Open("sqlite", "tracker.db")
+	if err != nil {
+		return err
+	}
+	defer db.Close()
 
-	return nil
+	_, err = db.Exec("UPDATE parcel SET status = :status WHERE number = :number",
+		sql.Named("status", status),
+		sql.Named("number", number))
+	return err
 }
 
 func (s ParcelStore) SetAddress(number int, address string) error {
 	// реализуйте обновление адреса в таблице parcel
 	// менять адрес можно только если значение статуса registered
+	db, err := sql.Open("sqlite", "tracker.db")
+	if err != nil {
+		return err
+	}
+	defer db.Close()
 
-	return nil
+	var status string
+
+	row := db.QueryRow("SELECT status from parcel WHERE number = :number", sql.Named("number", number))
+	err = row.Scan(&status)
+	if err != nil {
+		return err
+	}
+
+	if status != ParcelStatusRegistered {
+		return nil
+	}
+
+	_, err = db.Exec("UPDATE parcel SET address = :address WHERE number = :number",
+		sql.Named("number", number),
+		sql.Named("address", address))
+
+	return err
 }
 
 func (s ParcelStore) Delete(number int) error {
 	// реализуйте удаление строки из таблицы parcel
 	// удалять строку можно только если значение статуса registered
+	db, err := sql.Open("sqlite", "tracker.db")
+	if err != nil {
+		return err
+	}
+	defer db.Close()
 
-	return nil
+	var status string
+
+	row := db.QueryRow("SELECT status from parcel WHERE number = :number", sql.Named("number", number))
+	err = row.Scan(&status)
+	if err != nil {
+		return err
+	}
+
+	if status != ParcelStatusRegistered {
+		return nil
+	}
+
+	_, err = db.Exec("DELETE FROM parcel WHERE number = :number",
+		sql.Named("number", number))
+	return err
 }
