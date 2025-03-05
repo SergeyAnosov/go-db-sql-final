@@ -2,11 +2,11 @@ package main
 
 import (
 	"database/sql"
-	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -50,10 +50,10 @@ func TestAddGetDelete(t *testing.T) {
 	// проверьте, что значения всех полей в полученном объекте совпадают со значениями полей в переменной parcel
 	getParcel, err := store.Get(number)
 	require.NoError(t, err)
-	require.Equal(t, parcel.Client, getParcel.Client)
-	require.Equal(t, parcel.Status, getParcel.Status)
-	require.Equal(t, parcel.Address, getParcel.Address)
-	require.Equal(t, parcel.CreatedAt, getParcel.CreatedAt)
+	assert.Equal(t, parcel.Client, getParcel.Client)
+	assert.Equal(t, parcel.Status, getParcel.Status)
+	assert.Equal(t, parcel.Address, getParcel.Address)
+	assert.Equal(t, parcel.CreatedAt, getParcel.CreatedAt)
 
 	// delete
 	// удалите добавленную посылку, убедитесь в отсутствии ошибки
@@ -118,7 +118,6 @@ func TestSetStatus(t *testing.T) {
 	getParcel, err := store.Get(number)
 	require.NoError(t, err)
 	assert.Equal(t, ParcelStatusSent, getParcel.Status)
-
 }
 
 // TestGetByClient проверяет получение посылок по идентификатору клиента
@@ -126,7 +125,7 @@ func TestGetByClient(t *testing.T) {
 	// prepare
 	db, err := sql.Open("sqlite", "tracker.db") // настройте подключение к БД
 	require.NoError(t, err)
-	//defer db.Close()
+	defer db.Close()
 
 	store := NewParcelStore(db)
 
@@ -168,10 +167,5 @@ func TestGetByClient(t *testing.T) {
 		//убедитесь, что все посылки из storedParcels есть в parcelMap
 		//убедитесь, что значения полей полученных посылок заполнены верно
 		assert.Equal(t, parcelMap[parcel.Number], parcel)
-		assert.Equal(t, parcelMap[parcel.Number].Number, parcel.Number)
-		assert.Equal(t, parcelMap[parcel.Number].Client, parcel.Client)
-		assert.Equal(t, parcelMap[parcel.Number].Status, parcel.Status)
-		assert.Equal(t, parcelMap[parcel.Number].Address, parcel.Address)
-		assert.Equal(t, parcelMap[parcel.Number].CreatedAt, parcel.CreatedAt)
 	}
 }
